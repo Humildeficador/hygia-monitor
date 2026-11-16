@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitor UPA</title>
+</head>
+<body>
+  <h1>Monitoramento UPA</h1>
+
+  <div id="status">Carregando...</div>
+
+  <script>
+    async function updateStatus() {
+      try {
+        const response = await fetch('/api/status', {
+          cache: 'no-store'
+        });
+
+        if (!response.ok) {
+          throw new Error('Falha ao consultar status');
+        }
+
+        const data = await response.json();
+
+        document.querySelector('#status').textContent =
+          data.occupied ? 'TRUE' : 'FALSE';
+
+      } catch {
+        document.querySelector('#status').textContent = 'OFFLINE';
+      }
+    }
+
+    updateStatus();
+    setInterval(updateStatus, 5000);
+  </script>
+</body>
+</html>

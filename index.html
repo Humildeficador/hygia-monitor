@@ -4,36 +4,202 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitor UPA</title>
-</head>
-<body>
-  <h1>Monitoramento UPA</h1>
+  <meta name="theme-color" content="#0f172a" />
 
-  <div id="status">Carregando...</div>
+  <title>Monitoramento UPA</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        sans-serif;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      margin-top: 8px;
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+
+    .card {
+      padding: 32px 24px;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      background: #1e293b;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .status-indicator {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: #64748b;
+      vertical-align: middle;
+    }
+
+    .status {
+      margin: 24px 0 12px;
+      font-size: 1.65rem;
+      font-weight: 750;
+      letter-spacing: -0.7px;
+    }
+
+    .description {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .occupied .status {
+      color: #f87171;
+    }
+
+    .occupied .status-indicator {
+      background: #ef4444;
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.6);
+    }
+
+    .empty .status {
+      color: #4ade80;
+    }
+
+    .empty .status-indicator {
+      background: #22c55e;
+      box-shadow: 0 0 14px rgba(34, 197, 94, 0.5);
+    }
+
+    .offline .status {
+      color: #fbbf24;
+    }
+
+    .offline .status-indicator {
+      background: #f59e0b;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+
+    .footer strong {
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    @media (max-width: 360px) {
+      .card {
+        padding: 28px 18px;
+      }
+
+      .status {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>Monitoramento UPA</h1>
+      <p>Acompanhamento da fila de atendimento</p>
+    </header>
+
+    <section class="card offline" id="statusCard">
+      <span class="status-indicator"></span>
+      <div class="status" id="status">Carregando...</div>
+      <p class="description" id="description">
+        Consultando informações da unidade.
+      </p>
+    </section>
+
+    <footer class="footer">
+      <p>Última atualização</p>
+      <strong id="updatedAt">Aguardando...</strong>
+      <p style="margin-top: 12px;">Atualização automática a cada 5 segundos</p>
+    </footer>
+  </main>
 
   <script>
+    const statusCard = document.querySelector('#statusCard')
+    const statusElement = document.querySelector('#status')
+    const descriptionElement = document.querySelector('#description')
+    const updatedAtElement = document.querySelector('#updatedAt')
+
     async function updateStatus() {
       try {
         const response = await fetch('/api/status', {
-          cache: 'no-store'
-        });
+          cache: 'no-store',
+        })
 
         if (!response.ok) {
-          throw new Error('Falha ao consultar status');
+          throw new Error('Falha ao consultar status')
         }
 
-        const data = await response.json();
+        const data = await response.json()
 
-        document.querySelector('#status').textContent =
-          data.occupied ? 'TRUE' : 'FALSE';
+        if (typeof data.occupied !== 'boolean') {
+          throw new Error('Status inválido')
+        }
 
-      } catch {
-        document.querySelector('#status').textContent = 'OFFLINE';
+        statusCard.className = `card ${data.occupied ? 'occupied' : 'empty'}`
+
+        statusElement.textContent = data.occupied
+          ? 'Há pacientes na fila'
+          : 'Fila vazia'
+
+        descriptionElement.textContent = data.occupied
+          ? 'Existem pacientes aguardando atendimento.'
+          : 'Nenhum paciente aguardando atendimento.'
+
+        updatedAtElement.textContent = data.updated_at
+          ? new Date(data.updated_at).toLocaleString('pt-BR')
+          : 'Não informado'
+
+      } catch (error) {
+        statusCard.className = 'card offline'
+        statusElement.textContent = 'Sem conexão'
+        descriptionElement.textContent =
+          'Não foi possível consultar o status da unidade.'
       }
     }
 
-    updateStatus();
-    setInterval(updateStatus, 5000);
+    updateStatus()
+    setInterval(updateStatus, 5000)
   </script>
 </body>
 </html>

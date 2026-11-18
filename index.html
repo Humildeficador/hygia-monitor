@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -170,7 +170,21 @@
           throw new Error('Falha ao consultar status')
         }
 
+
         const data = await response.json()
+
+        if (data.online !== true) {
+          statusCard.className = 'card offline'
+          statusElement.textContent = 'Monitoramento offline'
+          descriptionElement.textContent =
+            'Não recebemos atualizações recentes da unidade.'
+
+          updatedAtElement.textContent = data.updated_at
+            ? new Date(data.updated_at).toLocaleString('pt-BR')
+            : 'Não informado'
+
+          return
+        }
 
         if (typeof data.occupied !== 'boolean') {
           throw new Error('Status inválido')
@@ -202,4 +216,5 @@
     setInterval(updateStatus, 5000)
   </script>
 </body>
+
 </html>
